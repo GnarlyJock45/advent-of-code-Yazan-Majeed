@@ -1,0 +1,82 @@
+#DAY 4 PART 2
+# This function turns the raw string into a list for us to manipulate
+
+with open("input.txt", "r") as file:
+    inputStr = file.read()
+
+
+def createMatrix(inputStr):
+    matrix = []
+    # Using splitlines is a cleaner way to handle the rows
+    for line in inputStr.splitlines():
+        if line:
+            matrix.append(list(line))
+
+    rows = len(matrix)
+    cols = len(matrix[0]) if rows > 0 else 0
+    return matrix, rows, cols
+
+
+# This function checks if a character is a paper roll
+def checkIfRoll(char, rollCount):
+    if char == "@":
+        rollCount += 1
+    return rollCount
+
+
+# This function checks if a specific roll at (row, col) can be accessed
+def canAccess(matrix, row, col):
+    totalRows = len(matrix)
+    totalCols = len(matrix[0])
+    neighborRolls = 0
+
+    offsets = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+
+    for rowOffset, colOffset in offsets:
+        neighborRow = row + rowOffset
+        neighborCol = col + colOffset
+
+        if 0 <= neighborRow < totalRows and 0 <= neighborCol < totalCols:
+            neighborVal = matrix[neighborRow][neighborCol]
+            neighborRolls = checkIfRoll(neighborVal, neighborRolls)
+
+    return neighborRolls < 4
+
+
+# This function performs one full pass of the matrix and removes accessible rolls
+def removePaperRolls(matrix):
+    totalRows = len(matrix)
+    totalCols = len(matrix[0])
+    rollsRemovedThisPass = 0
+    # We need to track which ones to remove so we don't change
+    # the neighbors for other rolls during the SAME pass
+    toRemove = []
+
+    for r in range(totalRows):
+        for c in range(totalCols):
+            if matrix[r][c] == "@":
+                if canAccess(matrix, r, c):
+                    toRemove.append((r, c))
+
+    # Now we actually turn the @ into .
+    for r, c in toRemove:
+        matrix[r][c] = "."
+        rollsRemovedThisPass += 1
+
+    return rollsRemovedThisPass
+
+
+matrix, rows, cols = createMatrix(inputStr)
+
+totalRemoved = 0
+canBeAltered = True
+
+# Keep looping until a pass removes 0 rolls
+while canBeAltered:
+    removedThisTurn = removePaperRolls(matrix)
+    if removedThisTurn == 0:
+        canBeAltered = False
+    else:
+        totalRemoved += removedThisTurn
+
+print(f"The number of paper rolls that have been removed: {totalRemoved}")
